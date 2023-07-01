@@ -1,0 +1,7 @@
+{
+    "cortex-debug.openocdPath": "C:\\PROGRAM FILES\\OPENOCD\\BIN\\OPENOCD.EXE",
+    "files.associations": {
+        "*.cps": "javascript",
+        "abilene_usb.h": "c"
+    }
+}
