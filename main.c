@@ -10,7 +10,17 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "tusb.h"
+#include "semphr.h" // For tusb
+#include "queue.h"  // For tusb
+
 #include "settings.h"
+
+#ifdef PICO_W
+    #include "pico/cyw43_arch.h"
+#endif
+
+#define USBD_STACK_SIZE    (3*configMINIMAL_STACK_SIZE/2) * (CFG_TUSB_DEBUG ? 2 : 1)
+#define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
 
 static TaskHandle_t appTaskHandle;
 static void App_Task(void * argument);
@@ -18,9 +28,13 @@ static void App_Task(void * argument);
 static TaskHandle_t usbTaskHandle;
 static void USB_Task(void * argument);
 
+static TaskHandle_t cdcTaskHandle;
+static void CDC_Task(void * argument);
+
 void App_Init(void) {
+
 #if CLOCK_SPEED_KHZ != 133000
-    set_sys_clock_khz(CLOCK_SPEED_KHZ, true);
+    //set_sys_clock_khz(CLOCK_SPEED_KHZ, true);
 #endif
 
     xTaskCreate( App_Task,             /* The function that implements the task. */
@@ -36,24 +50,72 @@ void App_Init(void) {
                  NULL,
                  USB_TASK_PRIORITY,
                  &usbTaskHandle );
+
+    xTaskCreate( CDC_Task,
+                 "CDC",
+                 CDC_TASK_STACK_SIZE,
+                 NULL,
+                 CDC_TASK_PRIORITY,
+                 &cdcTaskHandle );
+
 }
 
 static void App_Task(void * argument) {
     (void) argument;  // Unused parameter
 
+#ifdef PICO_W
+    cyw43_arch_init();
+#else
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+#endif
+
     while (1) {
         uint32_t lastCore = get_core_num();
         printf("Hello from core %d!\n", lastCore);
-        vTaskDelay(1000);
-    }   
+        vTaskDelay(500);
+#ifdef PICO_W
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+#else
+        gpio_put(LED_PIN, 0);
+#endif
+        vTaskDelay(500);
+#ifdef PICO_W
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+#else
+        gpio_put(LED_PIN, 1);
+#endif
+    }
 }
 
 static void USB_Task(void * argument) {
     (void) argument;  // Unused parameter
 
+    tud_init(BOARD_TUD_RHPORT);
+    stdio_init_all(); // This must be called after tud_init(), otherwise it will hang.
+
     while (1) {
         tud_task(); // device task
+        tud_cdc_write_flush();
     }   
+}
+
+static void CDC_Task(void * argument) {
+    (void) argument;  // Unused parameter
+
+    while (1) {
+        // There are data available
+        while ( tud_cdc_available() ) {
+            uint8_t buf[64];
+
+            // read and echo back
+            uint32_t count = tud_cdc_read(buf, sizeof(buf));
+            tud_cdc_write(buf, count);
+        }
+
+        tud_cdc_write_flush();
+        vTaskDelay(1);
+    }
 }
 
 int main() {
@@ -66,30 +128,6 @@ int main() {
     timer tasks to be created.  See the memory management section on the
     FreeRTOS web site for more details on the FreeRTOS heap
     http://www.freertos.org/a00111.html. */
-    for( ;; );
-}
-
-void vApplicationMallocFailedHook( void ) {
-    /* The malloc failed hook is enabled by setting
-    configUSE_MALLOC_FAILED_HOOK to 1 in FreeRTOSConfig.h.
-    Called if a call to pvPortMalloc() fails because there is insufficient
-    free memory available in the FreeRTOS heap.  pvPortMalloc() is called
-    internally by FreeRTOS API functions that create tasks, queues, software
-    timers, and semaphores.  The size of the FreeRTOS heap is set by the
-    configTOTAL_HEAP_SIZE configuration constant in FreeRTOSConfig.h. */
-    panic("malloc failed");
-}
-/*-----------------------------------------------------------*/
-
-void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName ) {
-    ( void ) pcTaskName;
-    ( void ) xTask;
-
-    /* Run time stack overflow checking is performed if
-    configconfigCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
-    function is called if a stack overflow is detected.  pxCurrentTCB can be
-    inspected in the debugger if the task name passed into this function is
-    corrupt. */
     for( ;; );
 }
 

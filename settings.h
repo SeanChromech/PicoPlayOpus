@@ -2,13 +2,17 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-    #define CLOCK_SPEED_KHZ 270000 // Overclocked to 270MHz.
+    #define PICO_W // Uncomment if using a Pico-W board.
+    #define CLOCK_SPEED_KHZ 250000 // Overclocked to 250MHz.
 
     #define APP_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
     #define APP_TASK_PRIORITY ( tskIDLE_PRIORITY + 3 )
     
     #define USB_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
     #define USB_TASK_PRIORITY ( tskIDLE_PRIORITY + 2 )
+
+    #define CDC_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
+    #define CDC_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 )
 
     /* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
     * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.

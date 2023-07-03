@@ -63,24 +63,6 @@ uint8_t const * tud_descriptor_device_cb(void)
 }
 
 //--------------------------------------------------------------------+
-// HID Report Descriptor
-//--------------------------------------------------------------------+
-
-uint8_t const desc_hid_report[] =
-{
-    TUD_HID_REPORT_DESC_GENERIC_INOUT(CFG_TUD_HID_EP_BUFSIZE)
-};
-
-// Invoked when received GET HID REPORT DESCRIPTOR
-// Application return pointer to descriptor
-// Descriptor contents must exist long enough for transfer to complete
-uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
-{
-    (void) itf;
-    return desc_hid_report;
-}
-
-//--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 
@@ -88,7 +70,7 @@ enum
 {
   ITF_NUM_CDC = 0,
   ITF_NUM_CDC_DATA,
-  ITF_NUM_HID,
+  ITF_NUM_MSC,
   ITF_NUM_TOTAL
 };
 
@@ -96,12 +78,11 @@ enum
 #define EPNUM_CDC_OUT     0x02
 #define EPNUM_CDC_IN      0x82
 
-#define EPNUM_HID_OUT     0x03
-#define EPNUM_HID_IN      0x83
+#define EPNUM_MSC_OUT     0x03
+#define EPNUM_MSC_IN      0x83
 
-#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_HID_INOUT_DESC_LEN)
+#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
 
-// full speed configuration
 uint8_t const desc_fs_configuration[] =
 {
   // Config number, interface count, string index, total length, attribute, power in mA
@@ -110,9 +91,8 @@ uint8_t const desc_fs_configuration[] =
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
 
-        // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
-  TUD_HID_INOUT_DESCRIPTOR(ITF_NUM_HID, 5, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report),
-                           EPNUM_HID_OUT, EPNUM_HID_IN, CFG_TUD_HID_EP_BUFSIZE, 10)
+  // Interface number, string index, EP Out & EP In address, EP size
+  TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -154,12 +134,11 @@ uint8_t const id_feature_descriptor[0x28] = {
 char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  "Calagen, Inc.",               // 1: Manufacturer
-  "Abilene Pendant Controller",  // 2: Product
-  "Unknown Serial Number",       // 3: Serials, should use chip ID
-  "Abilene Serial",              // 5: CDC Interface for Serial Data
-  "Abilene Controller",          // 4: HID Interface for Controller Signals
-  "MSFT100C",                    // 6: Windows OS String
+  "TinyUSB",                     // 1: Manufacturer
+  "TinyUSB Device",              // 2: Product
+  "123456789012",                // 3: Serials, should use chip ID
+  "TinyUSB CDC",                 // 4: CDC Interface
+  "TinyUSB MSC",                 // 5: MSC Interface
 };
 
 char picoUniqueId[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1];

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 set(ENV{PICO_SDK_PATH} ../pico-sdk)
 set(ENV{CMAKE_GENERATOR} "Unix Makefiles")
+set(ENV{PICO_BOARD} "pico_w")
 
 include(pico-sdk/external/pico_sdk_import.cmake)
 include(FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
@@ -30,7 +31,10 @@ target_compile_options(
 add_executable(${PROJECT}
                main.c
                ogg_stripper.c
-               usb_descriptors.c)
+               usb_descriptors.c
+               msc_disk.c
+               freertos_hook.c
+               )
 
 target_link_libraries(${PROJECT}
                       FreeRTOS-Kernel
@@ -39,11 +43,13 @@ target_link_libraries(${PROJECT}
                       pico_multicore
                       pico_bootrom
                       pico_unique_id
-                      hardware_spi
-                      hardware_i2c
+                      pico_cyw43_arch_none
                       hardware_dma
                       hardware_pio
                       tinyusb_device
                       )
+
+pico_enable_stdio_usb(${PROJECT} 1)
+pico_enable_stdio_uart(${PROJECT} 0)
 
 pico_add_extra_outputs(${PROJECT})
