@@ -5,3 +5,9 @@
 	path = FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel
 	branch = smp
+[submodule "pico-extras"]
+	path = pico-extras
+	url = https://github.com/raspberrypi/pico-extras
+[submodule "opus"]
+	path = opus
+	url = https://github.com/xiph/opus

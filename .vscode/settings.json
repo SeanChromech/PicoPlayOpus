@@ -4,6 +4,8 @@
         "*.cps": "javascript",
         "abilene_usb.h": "c",
         "cyw43_arch.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "wav_data.C": "cpp",
+        "settings.h": "c"
     }
 }
