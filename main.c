@@ -103,7 +103,7 @@ void App_Init(void) {
 
 static void App_Task(void * argument) {
     (void) argument;  // Unused parameter
-    absolute_time_t nextBlink = 0;
+    absolute_time_t nextBlink = make_timeout_time_ms(500);
     bool blinkState = true;
     size_t bytesWritten = 0;
     static uint32_t n = 0;
@@ -130,9 +130,9 @@ static void App_Task(void * argument) {
         buffer->sample_count = buffer->max_sample_count;
         give_audio_buffer(ap, buffer);
 
-        if ( nextBlink < get_absolute_time() ) {
-            //uint32_t lastCore = get_core_num();
-            //printf("Hello from core %d!\n", lastCore);
+        if ( to_us_since_boot(nextBlink) < to_us_since_boot( get_absolute_time() ) ) {
+            uint32_t lastCore = get_core_num();
+            printf("Hello from core %d!\n", lastCore);
 #ifdef PICO_W
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, blinkState);
 #else
