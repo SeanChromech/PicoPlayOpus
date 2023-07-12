@@ -8,7 +8,7 @@ include(pico-extras/external/pico_extras_import.cmake)
 include(FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
 
 include(opus/cmake/OpusFunctions.cmake)
-include_directories(opus/include opus opus/celt opus/silk opus/silk/fixed)
+include_directories(opus/include opus opus/celt opus/silk opus/silk/fixed ogg-data)
 
 # Get the list of files from the makefiles.
 # Add the folder prefix to each file in the lists.
@@ -78,9 +78,10 @@ add_executable(${PROJECT}
                main.c
                ogg_stripper.c
                usb_descriptors.c
-               msc_disk.c
                freertos_hook.c
-               wav_data.c
+               ogg-data/sample.c
+               opus/src/opus_decoder.c
+               opus/src/opus.c
                )
 
 add_sources_group(${PROJECT} silk ${silk_headers} ${silk_sources})

@@ -5,7 +5,7 @@
     #define PICO_W // Uncomment if using a Pico-W board.
     #define CLOCK_SPEED_KHZ 250000 // Overclocked to 250MHz.
 
-    #define APP_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
+    #define APP_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE + 48000)
     #define APP_TASK_PRIORITY ( tskIDLE_PRIORITY + 3 )
     
     #define USB_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)

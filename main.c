@@ -11,11 +11,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "tusb.h"
-#include "semphr.h" // For tusb
-#include "queue.h"  // For tusb
 #include "pico/audio_i2s.h"
 #include "settings.h"
-#include "wav_data.h"
+#include "ogg_stripper.h"
+#include "ogg_data.h"
 
 #include "opus.h"
 
@@ -23,7 +22,9 @@
     #include "pico/cyw43_arch.h"
 #endif
 
-#define SAMPLES_PER_BUFFER 256
+#define SAMPLES_PER_BUFFER 1920 // See the comment for opus_decode.  This is 120ms of audio at 16kHz.  I've used less
+                                // than this in the past and it was fine.
+#define OGG_BUF_LEN 0xFF
 
 #define USBD_STACK_SIZE    (3*configMINIMAL_STACK_SIZE/2) * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
@@ -31,7 +32,7 @@
 struct audio_buffer_pool *init_audio() {
     static audio_format_t audio_format = {
             .format = AUDIO_BUFFER_FORMAT_PCM_S16,
-            .sample_freq = 48000,
+            .sample_freq = 16000,
             .channel_count = 1,
     };
 
@@ -40,8 +41,7 @@ struct audio_buffer_pool *init_audio() {
             .sample_stride = 2
     };
 
-    struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 3,
-                                                                      SAMPLES_PER_BUFFER); // todo correct size
+    struct audio_buffer_pool *producer_pool = audio_new_producer_pool(&producer_format, 3, SAMPLES_PER_BUFFER);
     bool __unused ok;
     const struct audio_format *output_format;
 
@@ -106,7 +106,9 @@ static void App_Task(void * argument) {
     absolute_time_t nextBlink = make_timeout_time_ms(500);
     bool blinkState = true;
     size_t bytesWritten = 0;
-    static uint32_t n = 0;
+    int samplesDecoded = 0;
+    int packetsDecoded = 0;
+    int decoderError = 0;
 
 #ifdef PICO_W
     cyw43_arch_init();
@@ -116,19 +118,33 @@ static void App_Task(void * argument) {
 #endif
 
     struct audio_buffer_pool *ap = init_audio();
+    audio_buffer_t *buffer;
+    OpusDecoder *decoder = opus_decoder_create(16000, 1, &decoderError);
+    uint8_t oggBuf[OGG_BUF_LEN];
+    int32_t oggBufBytes = 0;
+
+    OggSetSource(Sample, SAMPLE_LENGTH);
+    bool valid = OggPrepareFile();
+
+    vTaskDelay(1000);
 
     while (1) {
-        struct audio_buffer *buffer = take_audio_buffer(ap, true);
-        int16_t *samples = (int16_t *) buffer->buffer->bytes;
-        for (uint32_t i = 0; i < buffer->max_sample_count; i++) {
-            samples[i] = data[n++];
+        if (valid) {
+            buffer = take_audio_buffer(ap, true);
 
-            if (n > NUM_ELEMENTS)
-                n = 0;
+            oggBufBytes = OggGetNextPacket(oggBuf, OGG_BUF_LEN);
+            if (oggBufBytes < 1) {
+                printf("Done!\r\n");
+                buffer->sample_count = 0;
+                valid = false;
+            } else {
+                buffer->sample_count = opus_decode(decoder, oggBuf, oggBufBytes,
+                                                   (int16_t *) buffer->buffer->bytes,
+                                                   (int) buffer->max_sample_count, 0);
+            }
+
+            give_audio_buffer(ap, buffer);
         }
-
-        buffer->sample_count = buffer->max_sample_count;
-        give_audio_buffer(ap, buffer);
 
         if ( to_us_since_boot(nextBlink) < to_us_since_boot( get_absolute_time() ) ) {
             uint32_t lastCore = get_core_num();
@@ -141,6 +157,7 @@ static void App_Task(void * argument) {
             blinkState = !blinkState;
             nextBlink = make_timeout_time_ms(500);
         }
+        vTaskDelay(1);
     }
 }
 

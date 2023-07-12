@@ -5,6 +5,15 @@
 
 #ifndef OGG_STRIPPER_H
 
+// Which type of source do you want to read from?
+// #define OGG_STRIP_FILE
+#define OGG_STRIP_MEMORY
+
+// Uncomment only one of the above.
+#if defined(OGG_STRIP_FILE) && defined(OGG_STRIP_MEMORY)
+    #error "You can only define one source type."
+#endif
+
 #define OGGS_MAGIC     0x5367674F // "OggS" NOTE: Might change due to endianness?
 #define OPUSHEAD_MAGIC 0x646165487375704F // "OpusHead"
 #define OPUSTAGS_MAGIC 0x736761547375704F // "OpusTags"
@@ -43,16 +52,18 @@ enum {
     OGG_STRIP_EOF = -2,
     OGG_STRIP_BAD_MAGIC = -3,
     OGG_STRIP_NO_SEGS = -4,
-    OGG_STRIP_LEN_SHORT = -5
+    OGG_STRIP_LEN_SHORT = -5,
+    OGG_STRIP_NULL_SOURCE = -6
 };
 
-int OggReadPageHeader (FILE * oggFile, oggPageHeader_t * header);
-int OggGetNextDataPage (FILE * oggFile, uint8_t * destination, size_t maxLength);
-int OggGetNextPacket (FILE * oggFile, uint8_t * destination, size_t maxLength);
+void OggSetSource (const void * source, size_t length);
+int OggReadPageHeader (oggPageHeader_t * header);
+int OggGetNextDataPage (uint8_t * destination, size_t maxLength);
+int OggGetNextPacket (uint8_t * destination, size_t maxLength);
 oggPageHeader_t* OggGetLastPageHeader(void);
-int OggGetIDHeader (FILE * oggFile, oggIDHeader_t * destination, int dataLen);
-int OggGetCommentHeader (FILE * oggFile, oggCommentHeader_t * destination, int dataLen);
-bool OggPrepareFile (FILE * oggFile);
+int OggGetIDHeader (oggIDHeader_t * destination, int dataLen);
+int OggGetCommentHeader (oggCommentHeader_t * destination, int dataLen);
+bool OggPrepareFile (void);
 
 
 #endif

@@ -70,7 +70,6 @@ enum
 {
   ITF_NUM_CDC = 0,
   ITF_NUM_CDC_DATA,
-  ITF_NUM_MSC,
   ITF_NUM_TOTAL
 };
 
@@ -78,10 +77,7 @@ enum
 #define EPNUM_CDC_OUT     0x02
 #define EPNUM_CDC_IN      0x82
 
-#define EPNUM_MSC_OUT     0x03
-#define EPNUM_MSC_IN      0x83
-
-#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_MSC_DESC_LEN)
+#define CONFIG_TOTAL_LEN    (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN)
 
 uint8_t const desc_fs_configuration[] =
 {
@@ -90,9 +86,6 @@ uint8_t const desc_fs_configuration[] =
 
   // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
-
-  // Interface number, string index, EP Out & EP In address, EP size
-  TUD_MSC_DESCRIPTOR(ITF_NUM_MSC, 5, EPNUM_MSC_OUT, EPNUM_MSC_IN, 64),
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -138,7 +131,6 @@ char const* string_desc_arr [] =
   "TinyUSB Device",              // 2: Product
   "123456789012",                // 3: Serials, should use chip ID
   "TinyUSB CDC",                 // 4: CDC Interface
-  "TinyUSB MSC",                 // 5: MSC Interface
 };
 
 char picoUniqueId[2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1];
