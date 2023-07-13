@@ -5,10 +5,13 @@
     #define PICO_W // Uncomment if using a Pico-W board.
     #define CLOCK_SPEED_KHZ 250000 // Overclocked to 250MHz.
 
-    #define APP_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE + 48000)
+    #define I2S_DATA_PIN 13
+    #define I2S_CLOCK_PIN 14
+
+    #define APP_TASK_STACK_SIZE (16*1024) // Increase this if you're getting HardFaults.
     #define APP_TASK_PRIORITY ( tskIDLE_PRIORITY + 3 )
     
-    #define USB_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
+    #define USB_TASK_STACK_SIZE ( (3*configMINIMAL_STACK_SIZE/2) * (CFG_TUSB_DEBUG ? 2 : 1) )
     #define USB_TASK_PRIORITY ( tskIDLE_PRIORITY + 2 )
 
     #define CDC_TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
@@ -26,6 +29,5 @@
 
     #define USB_VID   0xBEEF
     #define USB_BCD   0x0200
-
 
 #endif // SETTINGS_H

@@ -15,6 +15,10 @@ static oggCommentHeader_t currentCommentHeader;
     static size_t oggFileLength = 0;
 #endif
 
+
+// Generic function to read bytes from the source.
+// Assumes the source is already set and opened.
+// Returns the number of bytes read, or an error code.
 static inline int ReadBytes (void * destination, size_t length) {
 #ifdef OGG_STRIP_FILE
     if (oggFile == NULL)
@@ -37,6 +41,8 @@ static inline int ReadBytes (void * destination, size_t length) {
 #endif
 }
 
+
+// Seek the source by a number of bytes.
 static inline void SeekBytes (long length) {
 #ifdef OGG_STRIP_FILE
     if (oggFile != NULL)
@@ -47,6 +53,8 @@ static inline void SeekBytes (long length) {
 #endif
 }
 
+
+// Rewind the source to the beginning.
 static inline void Rewind (void) {
 #ifdef OGG_STRIP_FILE
     if (oggFile != NULL)
@@ -57,6 +65,9 @@ static inline void Rewind (void) {
 #endif
 }
 
+
+// Set the source to read from.
+// The source is assumed to be open and ready to read.
 void OggSetSource (const void * source, size_t length) {
 #ifdef OGG_STRIP_FILE
     oggFile = (FILE *)source;
@@ -66,6 +77,7 @@ void OggSetSource (const void * source, size_t length) {
     oggFileLength = length;
 #endif
 }
+
 
 // Parse the page header into a struct.
 // Expect to be at the beginning of the page.
@@ -98,6 +110,7 @@ int OggReadPageHeader (oggPageHeader_t * header) {
     }
 }
 
+
 // Grab the next page's content into destination.
 // This will pull the ENTIRE page, which is probably not as useful as the packet implementation below.
 // We assume we're at the beginning of the page (i.e. on OggS).
@@ -120,6 +133,7 @@ int OggGetNextDataPage (uint8_t * destination, size_t maxLength) {
         return dataLen; // This contains the error code from OggReadPageHeader.
     }
 }
+
 
 // Grab the next packet's content into destination.
 // This is probably audio data.
@@ -153,12 +167,15 @@ int OggGetNextPacket (uint8_t * destination, size_t maxLength) {
     }
 }
 
+
 oggPageHeader_t* OggGetLastPageHeader(void) {
     return &currentPageHeader;
 }
 
+
 // We should be at the start of the ID header data section.  Read it in.
 // At the end of this thing, we should have advanced dataLen.
+// Return an error code if something goes wrong, or OGG_STRIP_OK if everything's fine.
 int OggGetIDHeader (oggIDHeader_t * destination, int dataLen) {
     int extraBytes = dataLen - 19;
     // If dataLen exceeds the length of the ID header (like if there's a channel mapping table)
@@ -185,8 +202,10 @@ int OggGetIDHeader (oggIDHeader_t * destination, int dataLen) {
     }
 }
 
+
 // We should be at the start of the comment header data section.
 // As of now, we don't need to parse this crap.  Just skip it all for now.
+// Return an error code if something goes wrong, or OGG_STRIP_OK if everything's fine.
 int OggGetCommentHeader (oggCommentHeader_t * destination, int dataLen) {
     int extraBytes = dataLen - 12;
     // If dataLen exceeds the length of the comment header (like if there's a custom comment)
@@ -212,6 +231,7 @@ int OggGetCommentHeader (oggCommentHeader_t * destination, int dataLen) {
         return OGG_STRIP_LEN_SHORT;
     }
 }
+
 
 // Start the file at the beginning.  If it's valid, read the info.
 // Finally, seek to the beginning of the first data page.

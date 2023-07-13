@@ -11,11 +11,12 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "tusb.h"
-#include "pico/audio_i2s.h"
+
 #include "settings.h"
+
+#include "pico/audio_i2s.h"
 #include "ogg_stripper.h"
 #include "ogg_data.h"
-
 #include "opus.h"
 
 #ifdef PICO_W
@@ -26,9 +27,8 @@
                                 // than this in the past and it was fine.
 #define OGG_BUF_LEN 0xFF
 
-#define USBD_STACK_SIZE    (3*configMINIMAL_STACK_SIZE/2) * (CFG_TUSB_DEBUG ? 2 : 1)
-#define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
-
+// This is the audio init structure.  It's used to set up the audio device.
+// This is taken pretty verbatim from the Pico Audio example.
 struct audio_buffer_pool *init_audio() {
     static audio_format_t audio_format = {
             .format = AUDIO_BUFFER_FORMAT_PCM_S16,
@@ -46,8 +46,8 @@ struct audio_buffer_pool *init_audio() {
     const struct audio_format *output_format;
 
     struct audio_i2s_config config = {
-            .data_pin = 13,
-            .clock_pin_base = 14,
+            .data_pin = I2S_DATA_PIN,
+            .clock_pin_base = I2S_CLOCK_PIN,
             .dma_channel = 0,
             .pio_sm = 0,
     };
@@ -63,6 +63,7 @@ struct audio_buffer_pool *init_audio() {
     return producer_pool;
 }
 
+// Declare the FreeRTOS tasks.
 static TaskHandle_t appTaskHandle;
 static void App_Task(void * argument);
 
@@ -72,8 +73,8 @@ static void USB_Task(void * argument);
 static TaskHandle_t cdcTaskHandle;
 static void CDC_Task(void * argument);
 
+// Set the clock speed, then init the tasks.
 void App_Init(void) {
-
 #if CLOCK_SPEED_KHZ != 133000
     set_sys_clock_khz(CLOCK_SPEED_KHZ, true);
 #endif
@@ -101,6 +102,7 @@ void App_Init(void) {
 
 }
 
+// This is the main task.  It's responsible for blinking the LED and playing the audio.
 static void App_Task(void * argument) {
     (void) argument;  // Unused parameter
     absolute_time_t nextBlink = make_timeout_time_ms(500);
@@ -161,6 +163,7 @@ static void App_Task(void * argument) {
     }
 }
 
+// This is the USB task.  It's responsible for handling USB events.
 static void USB_Task(void * argument) {
     (void) argument;  // Unused parameter
 
@@ -173,6 +176,7 @@ static void USB_Task(void * argument) {
     }   
 }
 
+// This is the CDC task.  It's responsible for handling CDC events.
 static void CDC_Task(void * argument) {
     (void) argument;  // Unused parameter
 
@@ -191,6 +195,8 @@ static void CDC_Task(void * argument) {
     }
 }
 
+// This is the entry point for the program.
+// Call init, then start the scheduler to run the tasks.
 int main() {
     App_Init();
 
@@ -203,5 +209,3 @@ int main() {
     http://www.freertos.org/a00111.html. */
     for( ;; );
 }
-
-/** @} */

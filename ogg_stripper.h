@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #ifndef OGG_STRIPPER_H
+#define OGG_STRIPPER_H
 
 // Which type of source do you want to read from?
 // #define OGG_STRIP_FILE
@@ -64,6 +65,5 @@ oggPageHeader_t* OggGetLastPageHeader(void);
 int OggGetIDHeader (oggIDHeader_t * destination, int dataLen);
 int OggGetCommentHeader (oggCommentHeader_t * destination, int dataLen);
 bool OggPrepareFile (void);
-
 
 #endif
